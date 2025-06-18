@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Face Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .video-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        #videoFeed {
+            width: 100%;
+            border-radius: 4px;
+        }
+        .stats {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .alert {
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+            display: none;
+            animation: pulse 2s infinite;
+        }
+        .alert.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .alert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+        .cheating-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #dc3545;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            z-index: 1000;
+            display: none;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .warning-icon {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="cheating-warning" id="cheatingWarning">
+        <span class="warning-icon">⚠️</span>
+        WARNING: Multiple faces detected! This may be considered cheating.
+    </div>
+    <div class="container">
+        <h1>Live Face Detection</h1>
+        <div class="video-container">
+            <img id="videoFeed" src="/video_feed" alt="Video Feed">
+        </div>
+        <div class="stats">
+            <h3>Detection Statistics</h3>
+            <p>Number of faces detected: <span id="faceCount">0</span></p>
+            <p>Status: <span id="status">No faces detected</span></p>
+        </div>
+        <div id="alert" class="alert"></div>
+    </div>
+
+    <script>
+        const alertDiv = document.getElementById('alert');
+        const faceCountSpan = document.getElementById('faceCount');
+        const statusSpan = document.getElementById('status');
+        const cheatingWarning = document.getElementById('cheatingWarning');
+
+        // Connect to WebSocket
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            // Update face count
+            faceCountSpan.textContent = data.num_faces;
+            
+            // Update status and show appropriate warnings
+            if (data.num_faces === 0) {
+                statusSpan.textContent = 'No faces detected';
+                showAlert('No faces detected in the frame', 'warning');
+                hideCheatingWarning();
+            } else if (data.num_faces === 1) {
+                statusSpan.textContent = 'Single face detected';
+                showAlert('Single face detected - All good!', 'success');
+                hideCheatingWarning();
+            } else {
+                statusSpan.textContent = 'Multiple faces detected';
+                showAlert('WARNING: Multiple faces detected! This may be considered cheating.', 'danger');
+                showCheatingWarning();
+            }
+        };
+
+        function showAlert(message, type) {
+            alertDiv.textContent = message;
+            alertDiv.className = `alert ${type}`;
+            alertDiv.style.display = 'block';
+        }
+
+        function showCheatingWarning() {
+            cheatingWarning.style.display = 'block';
+        }
+
+        function hideCheatingWarning() {
+            cheatingWarning.style.display = 'none';
+        }
+
+        // Handle WebSocket connection errors
+        ws.onerror = function(error) {
+            console.error('WebSocket Error:', error);
+            showAlert('Connection error. Please refresh the page.', 'warning');
+        };
+
+        // Handle WebSocket connection close
+        ws.onclose = function() {
+            showAlert('Connection closed. Please refresh the page.', 'warning');
+        };
+    </script>
+</body>
+</html> 

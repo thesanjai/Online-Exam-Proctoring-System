@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  face-detection:
+    build: .
+    container_name: face-detection-app
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+    devices:
+      - /dev/video0:/dev/video0  # For webcam access
+    privileged: true  # Required for webcam access
+    restart: unless-stopped 

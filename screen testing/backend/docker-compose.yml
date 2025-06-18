@@ -1,0 +1,12 @@
+# version: '3.8'
+
+services:
+  screen-detector:
+    build: .
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SCREEN_COUNT=2  # Set this to match your actual number of screens
